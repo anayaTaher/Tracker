@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Financial Growth Tracker</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: sans-serif;
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);;
+      color: #e0e6ed;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      position: relative;
+    }
+
+    .header h1 {
+      font-size: clamp(28px, 5vw, 56px);
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+      margin-bottom: 15px;
+      letter-spacing: -0.02em;
+    }
+
+    .progress-info {
+      font-size: clamp(14px, 2.5vw, 18px);
+      color: #94a3b8;
+      font-weight: 500;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .progress-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .progress-label {
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .progress-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #22d3ee;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 24px;
+      max-width: 1799px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.6));
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 32px;
+      text-align: center;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #22d3ee, #3b82f6);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.6s ease;
+    }
+
+    .card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .card:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(34, 211, 238, 0.15);
+      border-color: rgba(34, 211, 238, 0.3);
+      cursor: pointer;
+    }
+
+    .card.target {
+      background: linear-gradient(145deg, rgba(16, 185, 129, 0.2), rgba(6, 182, 212, 0.15));
+      border: 2px solid #10b981;
+      box-shadow: 0 0 40px rgba(16, 185, 129, 0.4);
+      animation: targetPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes targetPulse {
+      0%, 100% { 
+        box-shadow: 0 0 40px rgba(16, 185, 129, 0.4);
+        transform: scale(1);
+      }
+      50% { 
+        box-shadow: 0 0 60px rgba(16, 185, 129, 0.6);
+        transform: scale(1.02);
+      }
+    }
+
+    .card.today {
+      background: linear-gradient(145deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.15));
+      border: 2px solid #f59e0b;
+      box-shadow: 0 0 30px rgba(251, 191, 36, 0.4);
+    }
+
+    .amount {
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 800;
+      margin-bottom: 16px;
+      color: #ffffff;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      letter-spacing: -0.02em;
+    }
+
+    .date {
+      font-size: 18px;
+      color: #cbd5e1;
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+
+    .day-info {
+      font-size: 14px;
+      margin-bottom: 16px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .weekday {
+      background: rgba(34, 211, 238, 0.15);
+      color: #22d3ee;
+      border: 1px solid rgba(34, 211, 238, 0.3);
+    }
+
+    .weekend {
+      background: rgba(248, 113, 113, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(248, 113, 113, 0.3);
+    }
+
+    .growth {
+      font-size: 16px;
+      color: #10b981;
+      margin: 12px 0;
+      font-weight: 700;
+      background: rgba(16, 185, 129, 0.1);
+      padding: 8px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .days-remaining {
+      font-size: 14px;
+      color: #94a3b8;
+      margin: 8px 0;
+      font-weight: 500;
+    }
+
+    .countdown {
+      font-size: 18px;
+      color: #f59e0b;
+      margin-top: 16px;
+      font-family: sans-serif;
+      font-weight: 700;
+      background: rgba(251, 191, 36, 0.1);
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+    }
+
+    .card-loaded {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .loading-shimmer {
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <h1>Financial Growth Journey</h1>
+    <div class="progress-info" id="progressInfo">
+      <div class="progress-item">
+        <div class="progress-label">Days Passed</div>
+        <div class="progress-value" id="daysPassed">-</div>
+      </div>
+      <div class="progress-item">
+        <div class="progress-label">Days Remaining</div>
+        <div class="progress-value" id="daysRemaining">-</div>
+      </div>
+      <div class="progress-item">
+        <div class="progress-label">Progress</div>
+        <div class="progress-value" id="progressPercent">-</div>
+      </div>
+    </div>
+  </div>
+  <div class="container" id="cardContainer"></div>
+
+  <script>
+    let cachedCards = null;
+    let cachedProgressInfo = null;
+
+    const generateProgression = () => {
+      if (cachedCards) return cachedCards;
+
+      let amount = 1000;
+      let calcDate = new Date('2025-01-01');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const cards = [];
+
+      while (amount < 500000) {
+        const isWeekday = [1, 2, 3, 4, 5].includes(calcDate.getDay());
+        let growth = 0;
+
+        if (isWeekday) {
+          const incrementAmount = 20 * Math.floor(amount / 10000);
+          growth = Math.max(20, incrementAmount);
+          amount += growth;
+        }
+
+        if (calcDate >= today) {
+          cards.push({
+            amount: amount,
+            date: new Date(calcDate),
+            growth: growth,
+            isWeekday: isWeekday,
+            isToday: calcDate.getTime() === today.getTime()
+          });
+        }
+
+        if (amount >= 510000) break;
+        calcDate.setDate(calcDate.getDate() + 1);
+      }
+
+      cachedCards = cards;
+      return cards;
+    };
+
+    const formatDate = (date) => {
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+      return {
+        dayName: days[date.getDay()],
+        formatted: `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`
+      };
+    };
+
+    const createCard = (cardData, isTarget = false, daysFromToday = 0) => {
+      const card = document.createElement('div');
+      card.className = `card ${isTarget ? 'target' : ''} ${cardData.isToday ? 'today' : ''}`;
+
+      const dateInfo = formatDate(cardData.date);
+      const isWeekday = cardData.isWeekday;
+
+      card.innerHTML = `
+        <div class="amount">${cardData.amount.toLocaleString()}</div>
+        <div class="date">${dateInfo.formatted}</div>
+        <div class="day-info ${isWeekday ? 'weekday' : 'weekend'}">
+          ${dateInfo.dayName}
+        </div>
+        ${cardData.growth > 0 ? `<div class="growth">+${cardData.growth.toLocaleString()}</div>` : ''}
+        ${daysFromToday >= 0 ? `<div class="days-remaining">${daysFromToday === 0 ? 'Today' : daysFromToday === 1 ? 'Tomorrow' : `${daysFromToday} days away`}</div>` : ''}
+        <div class="countdown" id="countdown-${daysFromToday}">00:00:00</div>
+      `;
+
+      return card;
+    };
+
+    let countdownElements = {};
+
+    const updateCountdowns = () => {
+      const now = new Date();
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      Object.keys(countdownElements).forEach(daysFromTodayStr => {
+        const daysFromToday = parseInt(daysFromTodayStr);
+        const countdownElement = countdownElements[daysFromTodayStr];
+
+        if (countdownElement) {
+          let targetTime;
+          if (daysFromToday === 0) {
+            targetTime = new Date();
+            targetTime.setHours(23, 59, 59, 999);
+          } else {
+            targetTime = new Date(today);
+            targetTime.setDate(targetTime.getDate() + daysFromToday);
+            targetTime.setHours(23, 59, 59, 999);
+          }
+
+          const timeLeft = targetTime - now;
+
+          if (timeLeft > 0) {
+            const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+            const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+            countdownElement.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+          } else {
+            countdownElement.textContent = '00:00:00';
+          }
+        }
+      });
+    };
+
+    const updateHeaderWithTotalDays = () => {
+      if (cachedProgressInfo) {
+        document.getElementById('daysPassed').textContent = cachedProgressInfo.daysPassed.toString();
+        document.getElementById('daysRemaining').textContent = cachedProgressInfo.daysRemaining.toString();
+        document.getElementById('progressPercent').textContent = `${cachedProgressInfo.liveProgressPercent}%`;
+        return;
+      }
+
+      const cards = generateProgression();
+      if (cards.length > 0) {
+        const lastCard = cards[cards.length - 1];
+        const today = new Date();
+        const startDate = new Date('2025-01-01');
+        const endDate = new Date(lastCard.date);
+        endDate.setHours(23, 59, 59, 999);
+
+        const passedDays = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+        const remainingDays = Math.floor((endDate - today) / (1000 * 60 * 60 * 24));
+
+        const totalSeconds = (endDate - startDate) / 1000;
+        const passedSeconds = (today - startDate) / 1000;
+        const liveProgressPercent = ((passedSeconds / totalSeconds) * 100).toFixed(2);
+
+        cachedProgressInfo = { passedDays, remainingDays, liveProgressPercent };
+
+        document.getElementById('daysPassed').textContent = passedDays.toString();
+        document.getElementById('daysRemaining').textContent = remainingDays.toString();
+        document.getElementById('progressPercent').textContent = `${liveProgressPercent}%`;
+      }
+    };
+
+    const renderCards = () => {
+      const container = document.getElementById('cardContainer');
+      const cards = generateProgression();
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Use document fragment for better performance
+      const fragment = document.createDocumentFragment();
+
+      cards.forEach((cardData, index) => {
+        const isTarget = cardData.amount >= 510000;
+        const daysFromToday = Math.floor((cardData.date - today) / (1000 * 60 * 60 * 24));
+        const card = createCard(cardData, isTarget, daysFromToday);
+        
+        // Cache countdown elements for faster updates
+        const countdownElement = card.querySelector(`#countdown-${daysFromToday}`);
+        if (countdownElement) {
+          countdownElements[daysFromToday.toString()] = countdownElement;
+        }
+        
+        fragment.appendChild(card);
+      });
+
+      container.appendChild(fragment);
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderCards();
+      updateHeaderWithTotalDays();
+      updateCountdowns();
+
+      // Reduce update frequency and use requestAnimationFrame for smoother performance
+      let lastUpdate = 0;
+      const updateInterval = 1000; // Update every second
+
+      const performUpdate = (timestamp) => {
+        if (timestamp - lastUpdate >= updateInterval) {
+          updateCountdowns();
+          // Only update header once per minute to reduce calculations
+          if (Math.floor(timestamp / 60000) !== Math.floor(lastUpdate / 60000)) {
+            cachedProgressInfo = null; // Reset cache to recalculate
+            updateHeaderWithTotalDays();
+          }
+          lastUpdate = timestamp;
+        }
+        requestAnimationFrame(performUpdate);
+      };
+
+      requestAnimationFrame(performUpdate);
+    });
+  </script>
+</body>
+</html>
