@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,7 +14,8 @@
 
     body {
       font-family: sans-serif;
-      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);;
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+      ;
       color: #e0e6ed;
       min-height: 100vh;
       padding: 20px;
@@ -121,11 +123,14 @@
     }
 
     @keyframes targetPulse {
-      0%, 100% { 
+
+      0%,
+      100% {
         box-shadow: 0 0 40px rgba(16, 185, 129, 0.4);
         transform: scale(1);
       }
-      50% { 
+
+      50% {
         box-shadow: 0 0 60px rgba(16, 185, 129, 0.6);
         transform: scale(1.02);
       }
@@ -217,8 +222,13 @@
     }
 
     @keyframes shimmer {
-      0% { transform: translateX(-100%); }
-      100% { transform: translateX(100%); }
+      0% {
+        transform: translateX(-100%);
+      }
+
+      100% {
+        transform: translateX(100%);
+      }
     }
   </style>
 </head>
@@ -251,7 +261,7 @@
       if (cachedCards) return cachedCards;
 
       let amount = 1000;
-      let calcDate = new Date('2025-01-01');
+      let calcDate = new Date('2024-12-30');
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const cards = [];
@@ -364,7 +374,7 @@
       if (cards.length > 0) {
         const lastCard = cards[cards.length - 1];
         const today = new Date();
-        const startDate = new Date('2025-01-01');
+        const startDate = new Date('2024-12-30');
         const endDate = new Date(lastCard.date);
         endDate.setHours(23, 59, 59, 999);
 
@@ -396,13 +406,13 @@
         const isTarget = cardData.amount >= 510000;
         const daysFromToday = Math.floor((cardData.date - today) / (1000 * 60 * 60 * 24));
         const card = createCard(cardData, isTarget, daysFromToday);
-        
+
         // Cache countdown elements for faster updates
         const countdownElement = card.querySelector(`#countdown-${daysFromToday}`);
         if (countdownElement) {
           countdownElements[daysFromToday.toString()] = countdownElement;
         }
-        
+
         fragment.appendChild(card);
       });
 
@@ -435,4 +445,5 @@
     });
   </script>
 </body>
+
 </html>
