@@ -257,6 +257,8 @@
     let cachedCards = null;
     let cachedProgressInfo = null;
 
+    const calculateLotSize = b => (b < 10000) ? 0.01 : 0.02 + Math.floor((b - 10000) / 10000) * 0.01;
+
     const generateProgression = () => {
       if (cachedCards) return cachedCards;
 
@@ -266,15 +268,10 @@
       today.setHours(0, 0, 0, 0);
       const cards = [];
 
-      while (amount < 500000) {
+      while (amount < 980000) {
         const isWeekday = [1, 2, 3, 4, 5].includes(calcDate.getDay());
         let growth = 0;
-
-        if (isWeekday) {
-          const incrementAmount = 20 * Math.floor(amount / 10000);
-          growth = Math.max(20, incrementAmount);
-          amount += growth;
-        }
+        if (isWeekday) amount += 2000 * calculateLotSize(amount);
 
         if (calcDate >= today) {
           cards.push({
@@ -286,7 +283,7 @@
           });
         }
 
-        if (amount >= 510000) break;
+        if (amount >= 980000) break;
         calcDate.setDate(calcDate.getDate() + 1);
       }
 
@@ -403,7 +400,7 @@
       const fragment = document.createDocumentFragment();
 
       cards.forEach((cardData, index) => {
-        const isTarget = cardData.amount >= 510000;
+        const isTarget = cardData.amount >= 980000;
         const daysFromToday = Math.floor((cardData.date - today) / (1000 * 60 * 60 * 24));
         const card = createCard(cardData, isTarget, daysFromToday);
 
@@ -424,16 +421,14 @@
       updateHeaderWithTotalDays();
       updateCountdowns();
 
-      // Reduce update frequency and use requestAnimationFrame for smoother performance
       let lastUpdate = 0;
-      const updateInterval = 1000; // Update every second
+      const updateInterval = 1000;
 
       const performUpdate = (timestamp) => {
         if (timestamp - lastUpdate >= updateInterval) {
           updateCountdowns();
-          // Only update header once per minute to reduce calculations
           if (Math.floor(timestamp / 60000) !== Math.floor(lastUpdate / 60000)) {
-            cachedProgressInfo = null; // Reset cache to recalculate
+            cachedProgressInfo = null;
             updateHeaderWithTotalDays();
           }
           lastUpdate = timestamp;
