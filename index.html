@@ -72,11 +72,22 @@
     }
 
     .container {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 24px;
       max-width: 1799px;
       margin: 0 auto;
+    }
+
+    .week-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 24px;
+      margin-bottom: 32px;
+      min-height: 200px;
+    }
+
+    @media (max-width: 1400px) {
+      .week-row {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      }
     }
 
     .card {
@@ -166,18 +177,9 @@
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-    }
-
-    .weekday {
       background: rgba(34, 211, 238, 0.15);
       color: #22d3ee;
       border: 1px solid rgba(34, 211, 238, 0.3);
-    }
-
-    .weekend {
-      background: rgba(248, 113, 113, 0.15);
-      color: #f87171;
-      border: 1px solid rgba(248, 113, 113, 0.3);
     }
 
     .growth {
@@ -216,19 +218,21 @@
       transform: translateY(0) scale(1);
     }
 
-    .loading-shimmer {
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-      animation: shimmer 2s infinite;
+    .card.empty {
+      background: linear-gradient(145deg, rgba(30, 41, 59, 0.3), rgba(51, 65, 85, 0.2));
+      border: 1px dashed rgba(100, 116, 139, 0.3);
+      opacity: 0.4;
     }
 
-    @keyframes shimmer {
-      0% {
-        transform: translateX(-100%);
-      }
+    .card.empty:hover {
+      transform: none;
+      box-shadow: none;
+      border-color: rgba(100, 116, 139, 0.3);
+      cursor: default;
+    }
 
-      100% {
-        transform: translateX(100%);
-      }
+    .card.empty::before {
+      display: none;
     }
   </style>
 </head>
@@ -268,27 +272,54 @@
       today.setHours(0, 0, 0, 0);
       const cards = [];
 
-      while (amount < 980000) {
+      while (amount < 979720) {
         const isWeekday = [1, 2, 3, 4, 5].includes(calcDate.getDay());
         let growth = 0;
         if (isWeekday) amount += 2000 * calculateLotSize(amount);
 
-        if (calcDate >= today) {
+        // Only add weekday cards to the display, but include all dates in calculations
+        if (calcDate >= today && isWeekday) {
           cards.push({
             amount: amount,
             date: new Date(calcDate),
             growth: growth,
             isWeekday: isWeekday,
-            isToday: calcDate.getTime() === today.getTime()
+            isToday: calcDate.getTime() === today.getTime(),
+            weekStart: getWeekStart(calcDate)
           });
         }
 
-        if (amount >= 980000) break;
+        if (amount >= 979720) break;
         calcDate.setDate(calcDate.getDate() + 1);
       }
 
       cachedCards = cards;
       return cards;
+    };
+
+    const getWeekStart = (date) => {
+      const d = new Date(date);
+      const day = d.getDay();
+      const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+      const monday = new Date(d.setDate(diff));
+      monday.setHours(0, 0, 0, 0);
+      return monday;
+    };
+
+    const createEmptyCard = (dayName) => {
+      const card = document.createElement('div');
+      card.className = 'card empty';
+
+      card.innerHTML = `
+        <div class="amount">-</div>
+        <div class="date">-</div>
+        <div class="day-info">
+          ${dayName}
+        </div>
+        <div class="days-remaining">Passed</div>
+      `;
+
+      return card;
     };
 
     const formatDate = (date) => {
@@ -306,12 +337,11 @@
       card.className = `card ${isTarget ? 'target' : ''} ${cardData.isToday ? 'today' : ''}`;
 
       const dateInfo = formatDate(cardData.date);
-      const isWeekday = cardData.isWeekday;
 
       card.innerHTML = `
         <div class="amount">${cardData.amount.toLocaleString()}</div>
         <div class="date">${dateInfo.formatted}</div>
-        <div class="day-info ${isWeekday ? 'weekday' : 'weekend'}">
+        <div class="day-info">
           ${dateInfo.dayName}
         </div>
         ${cardData.growth > 0 ? `<div class="growth">+${cardData.growth.toLocaleString()}</div>` : ''}
@@ -367,12 +397,26 @@
         return;
       }
 
-      const cards = generateProgression();
-      if (cards.length > 0) {
-        const lastCard = cards[cards.length - 1];
+      // Calculate total days including weekends for header
+      let amount = 1000;
+      let calcDate = new Date('2024-12-30');
+      let lastDate = null;
+
+      while (amount < 979720) {
+        const isWeekday = [1, 2, 3, 4, 5].includes(calcDate.getDay());
+        if (isWeekday) amount += 2000 * calculateLotSize(amount);
+
+        if (amount >= 979720) {
+          lastDate = new Date(calcDate);
+          break;
+        }
+        calcDate.setDate(calcDate.getDate() + 1);
+      }
+
+      if (lastDate) {
         const today = new Date();
         const startDate = new Date('2024-12-30');
-        const endDate = new Date(lastCard.date);
+        const endDate = new Date(lastDate);
         endDate.setHours(23, 59, 59, 999);
 
         const passedDays = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
@@ -396,21 +440,59 @@
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
+      // Group cards by week
+      const weekGroups = new Map();
+      cards.forEach(cardData => {
+        const weekKey = cardData.weekStart.getTime();
+        if (!weekGroups.has(weekKey)) {
+          weekGroups.set(weekKey, []);
+        }
+        weekGroups.get(weekKey).push(cardData);
+      });
+
       // Use document fragment for better performance
       const fragment = document.createDocumentFragment();
+      const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
-      cards.forEach((cardData, index) => {
-        const isTarget = cardData.amount >= 980000;
-        const daysFromToday = Math.floor((cardData.date - today) / (1000 * 60 * 60 * 24));
-        const card = createCard(cardData, isTarget, daysFromToday);
+      weekGroups.forEach((weekCards, weekKey) => {
+        const weekRow = document.createElement('div');
+        weekRow.className = 'week-row';
 
-        // Cache countdown elements for faster updates
-        const countdownElement = card.querySelector(`#countdown-${daysFromToday}`);
-        if (countdownElement) {
-          countdownElements[daysFromToday.toString()] = countdownElement;
-        }
+        // Create array to hold all 5 weekday slots
+        const weekSlots = new Array(5).fill(null);
 
-        fragment.appendChild(card);
+        // Fill in the actual cards
+        weekCards.forEach(cardData => {
+          const dayIndex = cardData.date.getDay() - 1; // Monday = 0, Friday = 4
+          if (dayIndex >= 0 && dayIndex < 5) {
+            weekSlots[dayIndex] = cardData;
+          }
+        });
+
+        // Create cards for each weekday slot
+        weekSlots.forEach((cardData, dayIndex) => {
+          let card;
+
+          if (cardData) {
+            // Regular card with data
+            const isTarget = cardData.amount >= 979720;
+            const daysFromToday = Math.floor((cardData.date - today) / (1000 * 60 * 60 * 24));
+            card = createCard(cardData, isTarget, daysFromToday);
+
+            // Cache countdown elements for faster updates
+            const countdownElement = card.querySelector(`#countdown-${daysFromToday}`);
+            if (countdownElement) {
+              countdownElements[daysFromToday.toString()] = countdownElement;
+            }
+          } else {
+            // Empty placeholder card
+            card = createEmptyCard(dayNames[dayIndex]);
+          }
+
+          weekRow.appendChild(card);
+        });
+
+        fragment.appendChild(weekRow);
       });
 
       container.appendChild(fragment);
